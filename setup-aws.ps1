@@ -5,20 +5,22 @@ Write-Host "=== Security Pipeline Setup ===" -ForegroundColor Green
 
 # Step 1: Verify AWS CLI installation
 Write-Host "`n1. Checking AWS CLI..." -ForegroundColor Yellow
-try {
+$awsVersion = Get-Command aws -ErrorAction SilentlyContinue
+if ($awsVersion) {
     aws --version
     Write-Host "✓ AWS CLI installed" -ForegroundColor Green
-} catch {
+} else {
     Write-Host "✗ AWS CLI not found. Please restart PowerShell and run this script again." -ForegroundColor Red
     exit 1
 }
 
 # Step 2: Verify Terraform installation
 Write-Host "`n2. Checking Terraform..." -ForegroundColor Yellow
-try {
+$terraformVersion = Get-Command terraform -ErrorAction SilentlyContinue
+if ($terraformVersion) {
     terraform --version
     Write-Host "✓ Terraform installed" -ForegroundColor Green
-} catch {
+} else {
     Write-Host "✗ Terraform not found. Please restart PowerShell and run this script again." -ForegroundColor Red
     exit 1
 }
@@ -42,11 +44,11 @@ if (-not (Test-Path "mobsf-key")) {
 
 # Step 5: Upload SSH key to AWS
 Write-Host "`n5. Uploading SSH key to AWS..." -ForegroundColor Yellow
-try {
-    aws ec2 import-key-pair --key-name mobsf-key --public-key-material "fileb://mobsf-key.pub" --region us-east-1 2>$null
+aws ec2 import-key-pair --key-name mobsf-key --public-key-material "fileb://mobsf-key.pub" --region us-east-1 2>$null
+if ($LASTEXITCODE -eq 0) {
     Write-Host "✓ SSH key uploaded to AWS" -ForegroundColor Green
-} catch {
-    Write-Host "! SSH key may already exist in AWS (this is OK)" -ForegroundColor Yellow
+} else {
+    Write-Host "! SSH key may already exist in AWS - this is OK" -ForegroundColor Yellow
 }
 
 # Step 6: Initialize Terraform

@@ -1,0 +1,28 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+terraform.tfstate.backup
+
+# SSH Keys
+*.pem
+mobsf-key
+mobsf-key.pub
+
+# AWS
+*.csv
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+judge-results.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
