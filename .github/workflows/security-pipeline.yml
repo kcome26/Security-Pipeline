@@ -32,6 +32,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Go (for CodeQL Go)
+        if: matrix.language == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set up Java (for CodeQL Java)
+        if: matrix.language == 'java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
@@ -156,7 +169,7 @@ jobs:
   # MobSF Mobile Security Analysis (on-demand EC2)
   mobsf-scan:
     name: Mobile Security Framework (MobSF)
-    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -215,7 +228,7 @@ jobs:
   # DAST: OWASP ZAP API Scanning
   api-dast:
     name: API Security Testing (OWASP ZAP)
-    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     services:
       zap:
         image: owasp/zap2docker-stable:latest
