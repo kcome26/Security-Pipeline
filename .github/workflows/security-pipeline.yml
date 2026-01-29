@@ -143,13 +143,41 @@ jobs:
           name: judge-script-results
           path: judge-results.json
 
-  # MobSF Mobile Security Analysis (requires cloud-hosted MobSF instance)
+  # MobSF Mobile Security Analysis (on-demand EC2)
   mobsf-scan:
     name: Mobile Security Framework (MobSF)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Start EC2 instance
+        id: start-instance
+        run: |
+          echo "Starting EC2 instance..."
+          aws ec2 start-instances --instance-ids ${{ secrets.MOBSF_INSTANCE_ID }}
+          
+          echo "Waiting for instance to be running..."
+          aws ec2 wait instance-running --instance-ids ${{ secrets.MOBSF_INSTANCE_ID }}
+          
+          # Get public IP
+          INSTANCE_IP=$(aws ec2 describe-instances \
+            --instance-ids ${{ secrets.MOBSF_INSTANCE_ID }} \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+          
+          echo "instance_ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
+          echo "MobSF instance started at $INSTANCE_IP"
+          
+          # Wait for MobSF to be ready
+          sleep 30
 
       - name: Find APK/IPA files
         id: find-apps
@@ -160,12 +188,19 @@ jobs:
       - name: Upload to MobSF
         if: steps.find-apps.outputs.found == 'true'
         run: |
+          MOBSF_URL="http://${{ steps.start-instance.outputs.instance_ip }}:8000"
           while IFS= read -r app; do
             echo "Uploading $app to MobSF..."
             curl -F "file=@$app" \
               -H "Authorization: ${{ secrets.MOBSF_API_KEY }}" \
-              ${{ secrets.MOBSF_API_URL }}/api/v1/upload
+              $MOBSF_URL/api/v1/upload
           done < apps.txt
+
+      - name: Stop EC2 instance
+        if: always()
+        run: |
+          echo "Stopping EC2 instance..."
+          aws ec2 stop-instances --instance-ids ${{ secrets.MOBSF_INSTANCE_ID }}
 
   # DAST: OWASP ZAP API Scanning
   api-dast:

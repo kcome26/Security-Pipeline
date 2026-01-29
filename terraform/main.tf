@@ -67,12 +67,13 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# Output MobSF API endpoint
+# Output MobSF API endpoint and instance ID
 output "mobsf_endpoint" {
   value       = "http://${aws_instance.mobsf.public_ip}:8000"
   description = "MobSF API endpoint"
 }
 
 output "mobsf_instance_id" {
-  value = aws_instance.mobsf.id
+  value       = aws_instance.mobsf.id
+  description = "EC2 Instance ID for starting/stopping"
 }
