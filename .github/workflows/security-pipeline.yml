@@ -22,33 +22,17 @@ env:
 
 jobs:
   # SAST: CodeQL analysis for code vulnerabilities
-  codeql:
-    name: CodeQL SAST Analysis
+  codeql-cpp:
+    name: CodeQL SAST Analysis (cpp)
     runs-on: [self-hosted, windows]
-    strategy:
-      matrix:
-        language: [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python' ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Go (for CodeQL Go)
-        if: matrix.language == 'go'
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-
-      - name: Set up Java (for CodeQL Java)
-        if: matrix.language == 'java'
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
-          languages: ${{ matrix.language }}
+          languages: cpp
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
@@ -59,7 +43,138 @@ jobs:
       - name: Upload CodeQL SARIF
         uses: actions/upload-artifact@v4
         with:
-          name: codeql-results-${{ matrix.language }}
+          name: codeql-results-cpp
+          path: results.sarif
+
+  codeql-csharp:
+    name: CodeQL SAST Analysis (csharp)
+    runs-on: [self-hosted, windows]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: csharp
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Upload CodeQL SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-results-csharp
+          path: results.sarif
+
+  codeql-go:
+    name: CodeQL SAST Analysis (go)
+    runs-on: [self-hosted, windows]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: go
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Upload CodeQL SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-results-go
+          path: results.sarif
+
+  codeql-java:
+    name: CodeQL SAST Analysis (java)
+    runs-on: [self-hosted, windows]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: java
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Upload CodeQL SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-results-java
+          path: results.sarif
+
+  codeql-javascript:
+    name: CodeQL SAST Analysis (javascript)
+    runs-on: [self-hosted, windows]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Upload CodeQL SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-results-javascript
+          path: results.sarif
+
+  codeql-python:
+    name: CodeQL SAST Analysis (python)
+    runs-on: [self-hosted, windows]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Upload CodeQL SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-results-python
           path: results.sarif
 
   # Secret scanning with Trufflehog
@@ -279,7 +394,7 @@ jobs:
   # Aggregate and report all security findings
   security-report:
     name: Security Findings Aggregation
-    needs: [ codeql, secret-scan, dependency-scan, iac-scan, security-judge, mobsf-scan, api-dast ]
+    needs: [ codeql-cpp, codeql-csharp, codeql-go, codeql-java, codeql-javascript, codeql-python, secret-scan, dependency-scan, iac-scan, security-judge, mobsf-scan, api-dast ]
     runs-on: [self-hosted, windows]
     if: always()
     steps:
