@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mobsf:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mobsf
+    ports:
+      - "8000:8000"
+    volumes:
+      - mobsf_uploads:/root/.MobSF/uploads
+      - mobsf_downloads:/root/.MobSF/downloads
+    environment:
+      - DEBUG=False
+    networks:
+      - security-pipeline
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: mobsf
+      POSTGRES_USER: mobsf
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - security-pipeline
+
+volumes:
+  mobsf_uploads:
+  mobsf_downloads:
+  postgres_data:
+
+networks:
+  security-pipeline:
+    driver: bridge

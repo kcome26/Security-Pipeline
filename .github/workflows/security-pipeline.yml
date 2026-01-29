@@ -1,0 +1,270 @@
+name: Comprehensive Security Scanning Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  REGISTRY: ghcr.io
+  MOBSF_DOCKER_IMAGE: mobsf:latest
+
+jobs:
+  # SAST: CodeQL analysis for code vulnerabilities
+  codeql:
+    name: CodeQL SAST Analysis
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python' ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Upload CodeQL SARIF
+        uses: actions/upload-artifact@v3
+        with:
+          name: codeql-results-${{ matrix.language }}
+          path: results.sarif
+
+  # Secret scanning with Trufflehog
+  secret-scan:
+    name: Secret Detection (Trufflehog)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run Trufflehog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --json --fail
+
+      - name: Upload secret scan results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: trufflehog-results
+          path: trufflehog-results.json
+
+  # Dependency auditing with Snyk
+  dependency-scan:
+    name: Dependency Audit (Snyk)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Snyk scan
+        uses: snyk/actions/setup@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk test for vulnerabilities
+        run: |
+          snyk auth $SNYK_TOKEN
+          snyk test --severity-threshold=high --json > snyk-results.json || true
+
+      - name: Upload Snyk results
+        uses: actions/upload-artifact@v3
+        with:
+          name: snyk-results
+          path: snyk-results.json
+
+  # Infrastructure as Code scanning with Checkov
+  iac-scan:
+    name: IaC Scanning (Checkov)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Checkov scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform/
+          framework: terraform
+          quiet: false
+          soft_fail: false
+          output_format: json
+          output_file_path: checkov-results.json
+
+      - name: Upload Checkov results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: checkov-results
+          path: checkov-results.json
+
+  # Custom data security validation with Judge Script
+  security-judge:
+    name: Custom Data Security Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install PyYAML jsonschema requests
+
+      - name: Run security judge script
+        run: python scripts/security_judge.py
+        env:
+          GITHUB_REPO: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+
+      - name: Upload judge script results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: judge-script-results
+          path: judge-results.json
+
+  # MobSF Mobile Security Analysis (requires cloud-hosted MobSF instance)
+  mobsf-scan:
+    name: Mobile Security Framework (MobSF)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Find APK/IPA files
+        id: find-apps
+        run: |
+          find . -type f \( -name "*.apk" -o -name "*.ipa" \) > apps.txt
+          if [ -s apps.txt ]; then echo "found=true" >> $GITHUB_OUTPUT; else echo "found=false" >> $GITHUB_OUTPUT; fi
+
+      - name: Upload to MobSF
+        if: steps.find-apps.outputs.found == 'true'
+        run: |
+          while IFS= read -r app; do
+            echo "Uploading $app to MobSF..."
+            curl -F "file=@$app" \
+              -H "Authorization: ${{ secrets.MOBSF_API_KEY }}" \
+              ${{ secrets.MOBSF_API_URL }}/api/v1/upload
+          done < apps.txt
+
+  # DAST: OWASP ZAP API Scanning
+  api-dast:
+    name: API Security Testing (OWASP ZAP)
+    runs-on: ubuntu-latest
+    services:
+      zap:
+        image: owasp/zap2docker-stable:latest
+        options: >-
+          --health-cmd "curl -f http://localhost:8080 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 8080:8080
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Extract API endpoints
+        id: extract-api
+        run: |
+          if [ -f "api-endpoints.txt" ]; then
+            echo "api_url=$(head -1 api-endpoints.txt)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Start API server (if applicable)
+        run: |
+          if [ -f "docker-compose.yml" ]; then
+            docker-compose up -d
+            sleep 10
+          fi
+
+      - name: Run ZAP API scan
+        run: |
+          docker run --network host \
+            -v $(pwd):/zap/wrk:rw \
+            owasp/zap2docker-stable zap-api-scan.py \
+            -t http://localhost:8000/api/v1/openapi.json \
+            -f openapi \
+            -r zap-api-report.html \
+            -J zap-results.json
+
+      - name: Upload ZAP results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-api-results
+          path: |
+            zap-api-report.html
+            zap-results.json
+
+  # Aggregate and report all security findings
+  security-report:
+    name: Security Findings Aggregation
+    needs: [ codeql, secret-scan, dependency-scan, iac-scan, security-judge, mobsf-scan, api-dast ]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download all scan results
+        uses: actions/download-artifact@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Aggregate findings
+        run: python scripts/aggregate_findings.py
+
+      - name: Comment PR with findings
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const findings = JSON.parse(fs.readFileSync('aggregated-findings.json', 'utf8'));
+            const comment = `## 🔒 Security Scan Results\n\n${findings.summary}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Upload aggregated report
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report
+          path: |
+            aggregated-findings.json
+            security-summary.txt
+
+      - name: Fail if critical findings
+        run: |
+          if [ "$(python scripts/check_severity.py critical)" -gt 0 ]; then
+            echo "Critical security findings detected!"
+            exit 1
+          fi
