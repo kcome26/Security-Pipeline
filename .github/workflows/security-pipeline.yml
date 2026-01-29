@@ -5,6 +5,16 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Choose runner type'
+        required: true
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+          - ubuntu-latest
+          - self-hosted
 
 env:
   REGISTRY: ghcr.io
@@ -14,7 +24,7 @@ jobs:
   # SAST: CodeQL analysis for code vulnerabilities
   codeql:
     name: CodeQL SAST Analysis
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     strategy:
       matrix:
         language: [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python' ]
@@ -42,7 +52,7 @@ jobs:
   # Secret scanning with Trufflehog
   secret-scan:
     name: Secret Detection (Trufflehog)
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -67,7 +77,7 @@ jobs:
   # Dependency auditing with Snyk
   dependency-scan:
     name: Dependency Audit (Snyk)
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -91,7 +101,7 @@ jobs:
   # Infrastructure as Code scanning with Checkov
   iac-scan:
     name: IaC Scanning (Checkov)
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -116,7 +126,7 @@ jobs:
   # Custom data security validation with Judge Script
   security-judge:
     name: Custom Data Security Validation
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -146,7 +156,7 @@ jobs:
   # MobSF Mobile Security Analysis (on-demand EC2)
   mobsf-scan:
     name: Mobile Security Framework (MobSF)
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -205,7 +215,7 @@ jobs:
   # DAST: OWASP ZAP API Scanning
   api-dast:
     name: API Security Testing (OWASP ZAP)
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     services:
       zap:
         image: owasp/zap2docker-stable:latest
@@ -257,7 +267,7 @@ jobs:
   security-report:
     name: Security Findings Aggregation
     needs: [ codeql, secret-scan, dependency-scan, iac-scan, security-judge, mobsf-scan, api-dast ]
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     if: always()
     steps:
       - name: Checkout code
