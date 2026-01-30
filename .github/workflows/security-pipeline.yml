@@ -6,15 +6,6 @@ on:
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
-    inputs:
-      runner:
-        description: 'Choose runner type'
-        required: true
-        default: 'ubuntu-latest'
-        type: choice
-        options:
-          - ubuntu-latest
-          - self-hosted
 
 env:
   REGISTRY: ghcr.io
