@@ -183,13 +183,12 @@ jobs:
 
       - name: Run Snyk scan
         uses: snyk/actions/setup@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Snyk test for vulnerabilities
         run: |
-          snyk auth $SNYK_TOKEN
           snyk test --severity-threshold=high --json > snyk-results.json || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Upload Snyk results
         uses: actions/upload-artifact@v4
