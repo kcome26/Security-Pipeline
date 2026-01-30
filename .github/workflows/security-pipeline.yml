@@ -153,7 +153,7 @@ jobs:
   # Secret scanning with Trufflehog
   secret-scan:
     name: Secret Detection (Trufflehog)
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -178,7 +178,7 @@ jobs:
   # Dependency auditing with Snyk
   dependency-scan:
     name: Dependency Audit (Snyk)
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -202,7 +202,7 @@ jobs:
   # Infrastructure as Code scanning with Checkov
   iac-scan:
     name: IaC Scanning (Checkov)
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -234,10 +234,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --user PyYAML jsonschema requests
+          py -m pip install --user PyYAML jsonschema requests
 
       - name: Run security judge script
-        run: python scripts/security_judge.py
+        run: py scripts/security_judge.py
         env:
           GITHUB_REPO: ${{ github.repository }}
           COMMIT_SHA: ${{ github.sha }}
