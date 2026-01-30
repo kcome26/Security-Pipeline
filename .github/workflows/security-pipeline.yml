@@ -259,14 +259,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
       - name: Install dependencies
         run: |
-          pip install PyYAML jsonschema requests
+          python -m pip install --user PyYAML jsonschema requests
 
       - name: Run security judge script
         run: python scripts/security_judge.py
@@ -284,7 +279,7 @@ jobs:
   # MobSF Mobile Security Analysis (Docker)
   mobsf-scan:
     name: Mobile Security Framework (MobSF)
-    runs-on: [self-hosted, Linux]
+    runs-on: ubuntu-latest
     services:
       mobsf:
         image: mobsf/mobsf:latest
@@ -328,7 +323,7 @@ jobs:
   # DAST: OWASP ZAP API Scanning
   api-dast:
     name: API Security Testing (OWASP ZAP)
-    runs-on: [self-hosted, Linux]
+    runs-on: ubuntu-latest
     services:
       zap:
         image: owasp/zap2docker-stable:latest
@@ -374,11 +369,6 @@ jobs:
 
       - name: Download all scan results
         uses: actions/download-artifact@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
 
       - name: Aggregate findings
         run: python scripts/aggregate_findings.py
