@@ -20,7 +20,7 @@ jobs:
   # SAST: CodeQL analysis for code vulnerabilities
   codeql-cpp:
     name: CodeQL SAST Analysis (cpp)
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -42,7 +42,7 @@ jobs:
 
   codeql-csharp:
     name: CodeQL SAST Analysis (csharp)
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -64,7 +64,7 @@ jobs:
 
   codeql-go:
     name: CodeQL SAST Analysis (go)
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -73,7 +73,9 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: go
-          build-mode: none
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
@@ -86,7 +88,7 @@ jobs:
 
   codeql-java:
     name: CodeQL SAST Analysis (java)
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -108,7 +110,7 @@ jobs:
 
   codeql-javascript:
     name: CodeQL SAST Analysis (javascript)
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -130,7 +132,7 @@ jobs:
 
   codeql-python:
     name: CodeQL SAST Analysis (python)
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -216,14 +218,14 @@ jobs:
   # Custom data security validation with Judge Script
   security-judge:
     name: Custom Data Security Validation
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --user PyYAML jsonschema requests
+          pip3 install --user PyYAML jsonschema requests
 
       - name: Run security judge script
         run: python3 scripts/security_judge.py
