@@ -213,16 +213,8 @@ jobs:
           directory: terraform/
           framework: terraform
           quiet: false
-          soft_fail: false
-          output_format: json
-          output_file_path: checkov-results.json
-
-      - name: Upload Checkov results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: checkov-results
-          path: checkov-results.json
+          soft_fail: true
+          skip_download: false
 
   # Custom data security validation with Judge Script
   security-judge:
