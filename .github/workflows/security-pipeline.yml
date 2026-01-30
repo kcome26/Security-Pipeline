@@ -24,7 +24,7 @@ jobs:
   # SAST: CodeQL analysis for code vulnerabilities
   codeql-cpp:
     name: CodeQL SAST Analysis (cpp)
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -48,7 +48,7 @@ jobs:
 
   codeql-csharp:
     name: CodeQL SAST Analysis (csharp)
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -72,7 +72,7 @@ jobs:
 
   codeql-go:
     name: CodeQL SAST Analysis (go)
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -101,7 +101,7 @@ jobs:
 
   codeql-java:
     name: CodeQL SAST Analysis (java)
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -131,7 +131,7 @@ jobs:
 
   codeql-javascript:
     name: CodeQL SAST Analysis (javascript)
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -155,7 +155,7 @@ jobs:
 
   codeql-python:
     name: CodeQL SAST Analysis (python)
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -180,7 +180,7 @@ jobs:
   # Secret scanning with Trufflehog
   secret-scan:
     name: Secret Detection (Trufflehog)
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -205,7 +205,7 @@ jobs:
   # Dependency auditing with Snyk
   dependency-scan:
     name: Dependency Audit (Snyk)
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -229,7 +229,7 @@ jobs:
   # Infrastructure as Code scanning with Checkov
   iac-scan:
     name: IaC Scanning (Checkov)
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -254,7 +254,7 @@ jobs:
   # Custom data security validation with Judge Script
   security-judge:
     name: Custom Data Security Validation
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -284,7 +284,7 @@ jobs:
   # MobSF Mobile Security Analysis (Docker)
   mobsf-scan:
     name: Mobile Security Framework (MobSF)
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, Linux]
     services:
       mobsf:
         image: mobsf/mobsf:latest
@@ -328,7 +328,7 @@ jobs:
   # DAST: OWASP ZAP API Scanning
   api-dast:
     name: API Security Testing (OWASP ZAP)
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, Linux]
     services:
       zap:
         image: owasp/zap2docker-stable:latest
@@ -366,7 +366,7 @@ jobs:
   security-report:
     name: Security Findings Aggregation
     needs: [ codeql-cpp, codeql-csharp, codeql-go, codeql-java, codeql-javascript, codeql-python, secret-scan, dependency-scan, iac-scan, security-judge, mobsf-scan, api-dast ]
-    runs-on: [self-hosted, windows]
+    runs-on: [self-hosted, Windows]
     if: always()
     steps:
       - name: Checkout code
