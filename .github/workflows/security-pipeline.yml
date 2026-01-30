@@ -225,7 +225,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip3 install --user PyYAML jsonschema requests
+          pip3 install --break-system-packages PyYAML jsonschema requests
 
       - name: Run security judge script
         run: python3 scripts/security_judge.py
