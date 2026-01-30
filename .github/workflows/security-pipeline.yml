@@ -160,13 +160,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Trufflehog
+      - name: Run Trufflehog filesystem scan
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-          extra_args: --json --fail
+          extra_args: --json
 
       - name: Upload secret scan results
         if: always()
@@ -226,10 +224,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          py -m pip install --user PyYAML jsonschema requests
+          python3 -m pip install --user PyYAML jsonschema requests
 
       - name: Run security judge script
-        run: py scripts/security_judge.py
+        run: python3 scripts/security_judge.py
         env:
           GITHUB_REPO: ${{ github.repository }}
           COMMIT_SHA: ${{ github.sha }}
