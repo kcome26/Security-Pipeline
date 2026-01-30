@@ -302,7 +302,7 @@ jobs:
   security-report:
     name: Security Findings Aggregation
     needs: [ codeql-cpp, codeql-csharp, codeql-go, codeql-java, codeql-javascript, codeql-python, secret-scan, dependency-scan, iac-scan, security-judge, mobsf-scan, api-dast ]
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, linux]
     if: always()
     steps:
       - name: Checkout code
@@ -312,7 +312,7 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Aggregate findings
-        run: python scripts/aggregate_findings.py
+        run: python3 scripts/aggregate_findings.py
 
       - name: Comment PR with findings
         if: github.event_name == 'pull_request'
